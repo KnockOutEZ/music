@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import Manage from '../views/Manage.vue';
 
@@ -20,10 +20,13 @@ const routes = [
     name: 'Manage',
     component: Manage,
   },
-  // this will redirect to /manage path
+  // this will redirect to /manage path if went to /manage-server path
   {
     path: '/manage-server',
     redirect: { name: 'Manage' },
+    // meta:{
+    //   requiresAuth:true,
+    // }
   },
   {
     path: '/:catchAll(.*)*',
@@ -32,7 +35,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHashHistory(process.env.BASE_URL),
+  history: createWebHistory(process.env.BASE_URL),
   routes,
   linkExactActiveClass: 'text-yellow-500',
 });

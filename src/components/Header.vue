@@ -49,12 +49,16 @@ export default {
     ...mapMutations(['toggleAuthModal']),
 
     // signing out by using Action mapper
-    ...mapActions(['signOut']),
+    // ...mapActions(['signOut']),
 
     // does the same thing like above.
-    // signout(){
-    //   this.$store.dispatch('signout')
-    // }
+    signOut() {
+      this.$store.dispatch('signOut');
+      // this.$route.meta.requiresAuth for using rote meta field
+      if (this.$route.name === 'Manage') {
+        this.$router.push({ path: '/' });
+      }
+    },
 
     // getting data from mutations
     // toggleAuthModal() {
