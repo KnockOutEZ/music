@@ -107,31 +107,15 @@ export default {
     };
   },
   methods: {
+    // this register used vuex actions
     async register(value) {
       this.reg_show_alert = true;
       this.reg_in_submission = true;
       this.reg_alert_variant = 'bg-blue-500';
       this.reg_alert_message = 'Please wait! Your account is being created.';
 
-      let userCred = null;
       try {
-        userCred = await auth.createUserWithEmailAndPassword(
-          value.email, value.password,
-        );
-      } catch (error) {
-        this.reg_in_submission = false;
-        this.reg_alert_variant = 'bg-red-500';
-        this.reg_alert_message = 'An unexpected error occured.Please try again later';
-        return;
-      }
-
-      try {
-        await userCollection.add({
-          name: value.name,
-          password: value.password,
-          age: value.age,
-          country: value.country,
-        });
+        await this.$store.dispatch('register', value);
       } catch (error) {
         this.reg_in_submission = false;
         this.reg_alert_variant = 'bg-red-500';
@@ -141,8 +125,49 @@ export default {
 
       this.reg_alert_variant = 'bg-green-500';
       this.reg_alert_message = 'Success! Your account has been created';
-      console.log(userCred);
+      console.log(value);
+
+      window.location.reload();
     },
+
+    // We could do register like this in the component
+    // async register(value) {
+    //   this.reg_show_alert = true;
+    //   this.reg_in_submission = true;
+    //   this.reg_alert_variant = 'bg-blue-500';
+    //   this.reg_alert_message = 'Please wait! Your account is being created.';
+
+    //   let userCred = null;
+    //   try {
+    //     userCred = await auth.createUserWithEmailAndPassword(
+    //       value.email, value.password,
+    //     );
+    //   } catch (error) {
+    //     this.reg_in_submission = false;
+    //     this.reg_alert_variant = 'bg-red-500';
+    //     this.reg_alert_message = 'An unexpected error occured.Please try again later';
+    //     return;
+    //   }
+
+    //   try {
+    //     await userCollection.add({
+    //       name: value.name,
+    //       password: value.password,
+    //       age: value.age,
+    //       country: value.country,
+    //     });
+    //   } catch (error) {
+    //     this.reg_in_submission = false;
+    //     this.reg_alert_variant = 'bg-red-500';
+    //     this.reg_alert_message = 'An unexpected error occured.Please try again later';
+    //     return;
+    //   }
+
+    //   this.$store.commit('toggleLogInState');
+    //   this.reg_alert_variant = 'bg-green-500';
+    //   this.reg_alert_message = 'Success! Your account has been created';
+    //   console.log(userCred);
+    // },
   },
 };
 </script>
