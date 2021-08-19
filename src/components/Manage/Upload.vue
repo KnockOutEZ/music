@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { storage } from '@/includes/firebase';
+import { storage, auth, songsCollection } from '@/includes/firebase';
 
 export default {
   name: 'Upload',
@@ -79,7 +79,19 @@ export default {
           this.uploads[uploadIndex].variant = 'bg-red-400';
           this.uploads[uploadIndex].icon = 'fas fa-times';
           this.uploads[uploadIndex].text_class = 'text-red-400';
-        }, () => {
+        }, async () => {
+          const song = {
+            uid: auth.currentUser.uid,
+            display_name: auth.currentUser.name,
+            original_name: task.snapshot.ref.name,
+            modified_name: task.snapshot.ref.name,
+            genre: '',
+            comment_count: 0,
+          };
+
+          song.url = await task.snapshot.ref.getDownloadURL();
+          await songsCollection.add(song);
+
           this.uploads[uploadIndex].variant = 'bg-green-400';
           this.uploads[uploadIndex].icon = 'fas fa-check';
           this.uploads[uploadIndex].text_class = 'text-green-400';
