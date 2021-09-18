@@ -21,6 +21,7 @@
                 >
               <h5>Drop your files here</h5>
             </div>
+            <input type="file" multiple @change="upload($event)">
             <hr class="my-6" />
             <!-- Progess Bars -->
             <div class="mb-4" v-for="upload in uploads" :key="upload.name">
@@ -30,8 +31,8 @@
               <div class="flex h-4 overflow-hidden bg-gray-200 rounded">
                 <!-- Inner Progress Bar -->
                 <div class="transition-all progress-bar bg-blue-400"
-                :class="upload.variant"
-                :style="{width: upload.current_progress + '%'}"></div>
+                :style="{width: upload.current_progress + '%',backgroundColor: upload.variant}">
+                </div>
               </div>
             </div>
           </div>
@@ -49,11 +50,14 @@ export default {
       uploads: [],
     };
   },
+  props: ['addSong'],
   methods: {
     upload($event) {
       this.is_dragover = false;
 
-      const files = [...$event.dataTransfer.files];
+      const files = $event.dataTransfer
+        ? [...$event.dataTransfer.files]
+        : [...$event.target.files];
 
       files.forEach((file) => {
         if (file.type !== 'audio/mpeg') {
@@ -76,13 +80,13 @@ export default {
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           this.uploads[uploadIndex].current_progress = progress;
         }, (error) => {
-          this.uploads[uploadIndex].variant = 'bg-red-400';
+          this.uploads[uploadIndex].variant = 'rgba(248, 113, 113, 1';
           this.uploads[uploadIndex].icon = 'fas fa-times';
           this.uploads[uploadIndex].text_class = 'text-red-400';
         }, async () => {
           const song = {
             uid: auth.currentUser.uid,
-            display_name: auth.currentUser.name,
+            display_name: auth.currentUser.displayName,
             original_name: task.snapshot.ref.name,
             modified_name: task.snapshot.ref.name,
             genre: '',
@@ -90,14 +94,23 @@ export default {
           };
 
           song.url = await task.snapshot.ref.getDownloadURL();
-          await songsCollection.add(song);
+          const songRef = await songsCollection.add(song);
+          const songSnapshot = await songRef.get();
 
-          this.uploads[uploadIndex].variant = 'bg-green-400';
+          this.addSong(songSnapshot);
+
+          this.uploads[uploadIndex].variant = 'rgba(52, 211, 153, 1)';
           this.uploads[uploadIndex].icon = 'fas fa-check';
           this.uploads[uploadIndex].text_class = 'text-green-400';
         });
       });
     },
+  },
+
+  beforeUnmount() {
+    this.uploads.forEach((upload) => {
+      upload.task.cancel();
+    });
   },
 };
 </script>

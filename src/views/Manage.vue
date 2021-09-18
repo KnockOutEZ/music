@@ -2,7 +2,7 @@
   <section class="container mx-auto mt-6">
     <div class="md:grid md:grid-cols-3 md:gap-4">
       <div class="col-span-1">
-        <Upload/>
+        <Upload :addSong = "addSong"/>
       </div>
       <div class="col-span-2">
         <div class="bg-white rounded border border-gray-200 relative flex flex-col">
@@ -12,85 +12,16 @@
           </div>
           <div class="p-6">
             <!-- Composition Items -->
-            <div class="border border-gray-200 p-3 mb-4 rounded">
-              <div>
-                <h4 class="inline-block text-2xl font-bold">Song Name</h4>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-red-600 float-right">
-                  <i class="fa fa-times"></i>
-                </button>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-blue-600 float-right">
-                  <i class="fa fa-pencil-alt"></i>
-                </button>
-              </div>
-              <div>
-                <form>
-                  <div class="mb-3">
-                    <label class="inline-block mb-2">Song Title</label>
-                    <input type="text"
-                      class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300
-                        transition duration-500 focus:outline-none focus:border-black rounded"
-                      placeholder="Enter Song Title" />
-                  </div>
-                  <div class="mb-3">
-                    <label class="inline-block mb-2">Genre</label>
-                    <input type="text"
-                      class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300
-                        transition duration-500 focus:outline-none focus:border-black rounded"
-                      placeholder="Enter Genre" />
-                  </div>
-                  <button type="submit" class="py-1.5 px-3 rounded text-white bg-green-600">
-                    Submit
-                  </button>
-                  <button type="button" class="py-1.5 px-3 rounded text-white bg-gray-600">
-                    Go Back
-                  </button>
-                </form>
-              </div>
-            </div>
-            <div class="border border-gray-200 p-3 mb-4 rounded">
-              <div>
-                <h4 class="inline-block text-2xl font-bold">Song Name</h4>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-red-600 float-right">
-                  <i class="fa fa-times"></i>
-                </button>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-blue-600 float-right">
-                  <i class="fa fa-pencil-alt"></i>
-                </button>
-              </div>
-            </div>
-            <div class="border border-gray-200 p-3 mb-4 rounded">
-              <div>
-                <h4 class="inline-block text-2xl font-bold">Song Name</h4>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-red-600 float-right">
-                  <i class="fa fa-times"></i>
-                </button>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-blue-600 float-right">
-                  <i class="fa fa-pencil-alt"></i>
-                </button>
-              </div>
-            </div>
-            <div class="border border-gray-200 p-3 mb-4 rounded">
-              <div>
-                <h4 class="inline-block text-2xl font-bold">Song Name</h4>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-red-600 float-right">
-                  <i class="fa fa-times"></i>
-                </button>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-blue-600 float-right">
-                  <i class="fa fa-pencil-alt"></i>
-                </button>
-              </div>
-            </div>
-            <div class="border border-gray-200 p-3 mb-4 rounded">
-              <div>
-                <h4 class="inline-block text-2xl font-bold">Song Name</h4>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-red-600 float-right">
-                  <i class="fa fa-times"></i>
-                </button>
-                <button class="ml-1 py-1 px-2 text-sm rounded text-white bg-blue-600 float-right">
-                  <i class="fa fa-pencil-alt"></i>
-                </button>
-              </div>
-            </div>
+            <div class="text-white text-center font-bold p-4 mb-4" v-show="show_message"
+                :class="show_alert_variant">
+                  {{show_alert_message}}
+                </div>
+            <CompositionItems v-for="(song,i) in songs" :key="song.docID" :song='song'
+            :updateSong="updateSong" :index="i" :removeSong="removeSong"
+            :updateUnsavedFlag ="updateUnsavedFlag" :show_message="show_message"
+            :show_alert_message="show_alert_message" :show_alert_variant="show_alert_variant"
+            :deletePrompt="deletePrompt" :deleteFailureMsg="deleteFailureMsg"
+            :deleteSuccessMsg="deleteSuccessMsg" :hideMsg="hideMsg"/>
           </div>
         </div>
       </div>
@@ -100,18 +31,85 @@
 
 <script>
 import store from '@/store/index';
+import { songsCollection, auth } from '@/includes/firebase';
 import Upload from '../components/Manage/Upload.vue';
+import CompositionItems from '../components/Manage/CompositionItems.vue';
 
 export default {
   name: 'Manage',
-  components: {
-    Upload,
+  data() {
+    return {
+      songs: [],
+      unsavedFlag: false,
+      show_message: false,
+      show_alert_message: 'Please wait!We are trying to delete your song!',
+      show_alert_variant: 'bg-blue-500',
+    };
   },
+  components: {
+    Upload, CompositionItems,
+  },
+  async created() {
+    const snapshot = await songsCollection.where('uid', '==', auth.currentUser.uid).get();
+    snapshot.forEach(this.addSong);
+  },
+
   beforeRouteEnter(to, from, next) {
     if (store.state.isLoggedIn) {
       next();
     } else {
       next({ path: 'Home' });
+    }
+  },
+
+  methods: {
+    updateSong(i, values) {
+      this.songs[i].modified_name = values.modified_name;
+      this.songs[i].genre = values.genre;
+    },
+
+    removeSong(i) {
+      this.songs.splice(i, 1);
+    },
+    addSong(document) {
+      const song = {
+        ...document.data(),
+        docID: document.id,
+      };
+
+      this.songs.push(song);
+    },
+    updateUnsavedFlag(value) {
+      this.unsavedFlag = value;
+    },
+
+    deletePrompt() {
+      this.show_message = true;
+      this.show_alert_message = 'Please wait! We are trying to delete your song!';
+      this.show_alert_variant = 'bg-blue-500';
+    },
+
+    deleteFailureMsg() {
+      this.show_alert_message = 'Failure';
+      this.show_alert_variant = 'bg-red-500';
+    },
+
+    deleteSuccessMsg() {
+      this.show_alert_message = 'Success!';
+      this.show_alert_variant = 'bg-green-500';
+    },
+
+    hideMsg() {
+      this.show_message = false;
+    },
+  },
+
+  beforeRouteLeave(to, from, next) {
+    if (!this.unsavedFlag) {
+      next();
+    } else {
+      const leave = window.confirm('You have unsaved changes.Are you sure  you want to leave?');
+      next(leave);
     }
   },
 };
